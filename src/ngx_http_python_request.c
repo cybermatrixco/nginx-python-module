@@ -163,7 +163,6 @@ static PyGetSetDef ngx_http_python_request_getset[] = {
  */
 
 static PyTypeObject  ngx_http_python_request_type = {
-    .ob_refcnt = 1,
     .tp_name = "ngx.HttpRequest",
     .tp_basicsize = sizeof(ngx_http_python_request_t),
     .tp_dealloc = (destructor) ngx_http_python_request_dealloc,
@@ -221,7 +220,6 @@ static PyMappingMethods ngx_http_python_request_hdr_mapping = {
 
 
 static PyTypeObject  ngx_http_python_request_hdr_type = {
-    .ob_refcnt = 1,
     .tp_name = "ngx.HttpHeaders",
     .tp_basicsize = sizeof(ngx_http_python_request_hdr_t),
     .tp_dealloc = (destructor) ngx_http_python_request_hdr_dealloc,
@@ -269,7 +267,6 @@ static PyMappingMethods ngx_http_python_request_arg_mapping = {
 
 
 static PyTypeObject  ngx_http_python_request_arg_type = {
-    .ob_refcnt = 1,
     .tp_name = "ngx.HttpArguments",
     .tp_basicsize = sizeof(ngx_http_python_request_arg_t),
     .tp_dealloc = (destructor) ngx_http_python_request_arg_dealloc,
@@ -317,7 +314,6 @@ static PyMappingMethods ngx_http_python_request_var_mapping = {
 
 
 static PyTypeObject  ngx_http_python_request_var_type = {
-    .ob_refcnt = 1,
     .tp_name = "ngx.HttpVariables",
     .tp_basicsize = sizeof(ngx_http_python_request_var_t),
     .tp_dealloc = (destructor) ngx_http_python_request_var_dealloc,
@@ -661,7 +657,7 @@ ngx_http_python_request_dealloc(ngx_http_python_request_t *self)
 {
     Py_DECREF(self->ctx);
 
-    self->ob_type->tp_free((PyObject*) self);
+    Py_TYPE(self)->tp_free(self);
 }
 
 
@@ -684,7 +680,7 @@ ngx_http_python_request_hdr_subscript(ngx_http_python_request_hdr_t *self,
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "http python hdr subscript()");
 
-    if (PyString_AsStringAndSize(key, &data, &len) < 0 ) {
+    if (PyBytes_AsStringAndSize(key, &data, &len) < 0 ) {
         return NULL;
     }
 
@@ -693,10 +689,10 @@ ngx_http_python_request_hdr_subscript(ngx_http_python_request_hdr_t *self,
     h = ngx_http_python_find_header(headers, (u_char *) data, len);
 
     if (h == NULL || h->hash == 0) {
-        return PyString_FromStringAndSize(NULL, 0);
+        return PyBytes_FromStringAndSize(NULL, 0);
     }
 
-    return PyString_FromStringAndSize((char *) h->value.data, h->value.len);
+    return PyBytes_FromStringAndSize((char *) h->value.data, h->value.len);
 }
 
 
@@ -728,7 +724,7 @@ ngx_http_python_request_hdr_ass_subscript(ngx_http_python_request_hdr_t *self,
 
     vs = NULL;
 
-    if (PyString_AsStringAndSize(key, &data, &len) < 0) {
+    if (PyBytes_AsStringAndSize(key, &data, &len) < 0) {
         goto failed;
     }
 
@@ -740,7 +736,7 @@ ngx_http_python_request_hdr_ass_subscript(ngx_http_python_request_hdr_t *self,
             goto failed;
         }
 
-        if (PyString_AsStringAndSize(vs, &vdata, &vlen) < 0) {
+        if (PyBytes_AsStringAndSize(vs, &vdata, &vlen) < 0) {
             goto failed;
         }
     }
@@ -835,7 +831,7 @@ ngx_http_python_request_hdr_dealloc(ngx_http_python_request_hdr_t *self)
 {
     Py_DECREF(self->pr);
 
-    self->ob_type->tp_free((PyObject*) self);
+    Py_TYPE(self)->tp_free(self);
 }
 
 
@@ -857,15 +853,15 @@ ngx_http_python_request_arg_subscript(ngx_http_python_request_arg_t *self,
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "http python arg subscript()");
 
-    if (PyString_AsStringAndSize(key, &data, &len) < 0 ) {
+    if (PyBytes_AsStringAndSize(key, &data, &len) < 0 ) {
         return NULL;
     }
 
     if (ngx_http_arg(r, (u_char *) data, len, &value) != NGX_OK) {
-        return PyString_FromStringAndSize(NULL, 0);
+        return PyBytes_FromStringAndSize(NULL, 0);
     }
 
-    return PyString_FromStringAndSize((char *) value.data, value.len);
+    return PyBytes_FromStringAndSize((char *) value.data, value.len);
 }
 
 
@@ -874,7 +870,7 @@ ngx_http_python_request_arg_dealloc(ngx_http_python_request_arg_t *self)
 {
     Py_DECREF(self->pr);
 
-    self->ob_type->tp_free((PyObject*) self);
+    Py_TYPE(self)->tp_free(self);
 }
 
 
@@ -898,7 +894,7 @@ ngx_http_python_request_var_subscript(ngx_http_python_request_var_t *self,
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "http python var subscript()");
 
-    if (PyString_AsStringAndSize(key, &data, &len) < 0 ) {
+    if (PyBytes_AsStringAndSize(key, &data, &len) < 0 ) {
         return NULL;
     }
 
@@ -914,10 +910,10 @@ ngx_http_python_request_var_subscript(ngx_http_python_request_var_t *self,
     }
 
     if (vv->not_found) {
-        return PyString_FromStringAndSize(NULL, 0);
+        return PyBytes_FromStringAndSize(NULL, 0);
     }
 
-    return PyString_FromStringAndSize((char *) vv->data, vv->len);
+    return PyBytes_FromStringAndSize((char *) vv->data, vv->len);
 }
 
 
@@ -926,7 +922,7 @@ ngx_http_python_request_var_dealloc(ngx_http_python_request_var_t *self)
 {
     Py_DECREF(self->pr);
 
-    self->ob_type->tp_free((PyObject*) self);
+    Py_TYPE(self)->tp_free(self);
 }
 
 

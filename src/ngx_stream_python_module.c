@@ -182,7 +182,7 @@ ngx_stream_python_access_handler(ngx_stream_session_t *s)
             return NGX_ERROR;
         }
 
-        rc = PyInt_Check(ret) ? PyInt_AsLong(ret) : NGX_DECLINED;
+        rc = PyLong_Check(ret) ? PyLong_AsLong(ret) : NGX_DECLINED;
 
         Py_DECREF(ret);
 
@@ -246,7 +246,7 @@ ngx_stream_python_preread_handler(ngx_stream_session_t *s)
             return NGX_ERROR;
         }
 
-        rc = PyInt_Check(ret) ? PyInt_AsLong(ret) : NGX_DECLINED;
+        rc = PyLong_Check(ret) ? PyLong_AsLong(ret) : NGX_DECLINED;
 
         Py_DECREF(ret);
 
@@ -332,7 +332,7 @@ ngx_stream_python_content_event_handler(ngx_event_t *event)
         return;
     }
 
-    rc = PyInt_Check(ret) ? PyInt_AsLong(ret) : NGX_OK;
+    rc = PyLong_Check(ret) ? PyLong_AsLong(ret) : NGX_OK;
 
     Py_DECREF(ret);
 
@@ -366,7 +366,7 @@ ngx_stream_python_variable(ngx_stream_session_t *s,
         return NGX_ERROR;
     }
 
-    if (PyString_AsStringAndSize(str, (char **) &p, &size) < 0) {
+    if (PyBytes_AsStringAndSize(str, (char **) &p, &size) < 0) {
         PyErr_Clear();
         Py_DECREF(str);
         return NGX_ERROR;

@@ -265,7 +265,6 @@ static PyMemberDef ngx_python_socket_members[] = {
 
 
 static PyTypeObject  ngx_python_socket_type = {
-    .ob_refcnt = 1,
     .tp_name = "NginxSocket",
     .tp_basicsize = sizeof(ngx_python_socket_t),
     .tp_dealloc = (destructor) ngx_python_socket_dealloc,
@@ -365,7 +364,6 @@ static PyMethodDef ngx_python_socket_file_methods[] = {
 
 
 static PyTypeObject  ngx_python_socket_file_type = {
-    .ob_refcnt = 1,
     .tp_name = "NginxSocketFileObject",
     .tp_basicsize = sizeof(ngx_python_socket_file_t),
     .tp_dealloc = (destructor) ngx_python_socket_file_dealloc,
@@ -669,7 +667,7 @@ ngx_python_socket_fileno(ngx_python_socket_t *s)
     ngx_log_debug0(NGX_LOG_DEBUG_CORE, ngx_cycle->log, 0,
                    "python socket.fileno()");
 
-    return PyInt_FromLong(s->connection ? s->connection->fd : -1);
+    return PyLong_FromLong(s->connection ? s->connection->fd : -1);
 }
 
 
@@ -750,7 +748,7 @@ ngx_python_socket_fmtaddr(struct sockaddr *sockaddr)
 
         saun = (struct sockaddr_un *) sockaddr;
 
-        return PyString_FromString(saun->sun_path);
+        return PyBytes_FromString(saun->sun_path);
 
 #endif
 
@@ -813,23 +811,23 @@ ngx_python_socket_getsockopt(ngx_python_socket_t *s, PyObject *args)
             return NULL;
         }
 
-        return PyInt_FromLong(value);
+        return PyLong_FromLong(value);
     }
 
-    str = PyString_FromStringAndSize(NULL, len);
+    str = PyBytes_FromStringAndSize(NULL, len);
     if (str == NULL) {
         return NULL;
     }
 
     slen = len;
 
-    if (getsockopt(c->fd, level, optname, PyString_AS_STRING(str), &slen)) {
+    if (getsockopt(c->fd, level, optname, PyBytes_AS_STRING(str), &slen)) {
         Py_DECREF(str);
         PyErr_SetFromErrno(ngx_python_socket_error);
         return NULL;
     }
 
-    if (_PyString_Resize(&str, slen) < 0) {
+    if (_PyBytes_Resize(&str, slen) < 0) {
         return NULL;
     }
 
@@ -905,12 +903,12 @@ ngx_python_socket_recv(ngx_python_socket_t *s, PyObject *args)
         return NULL;
     }
 
-    ret = PyString_FromStringAndSize(NULL, len);
+    ret = PyBytes_FromStringAndSize(NULL, len);
     if (ret == NULL) {
         return NULL;
     }
 
-    p = (u_char *) PyString_AS_STRING(ret);
+    p = (u_char *) PyBytes_AS_STRING(ret);
 
     n = ngx_python_socket_do_recv(s, p, len);
     if (n < 0) {
@@ -919,7 +917,7 @@ ngx_python_socket_recv(ngx_python_socket_t *s, PyObject *args)
     }
 
     if (n != len) {
-        if (_PyString_Resize(&ret, n) < 0) {
+        if (_PyBytes_Resize(&ret, n) < 0) {
             return NULL;
         }
     }
@@ -974,7 +972,7 @@ ngx_python_socket_recv_into(ngx_python_socket_t *s, PyObject *args,
         return NULL;
     }
 
-    return PyInt_FromSsize_t(n);
+    return PyLong_FromSsize_t(n);
 }
 
 
@@ -1191,7 +1189,7 @@ ngx_python_socket_send(ngx_python_socket_t *s, PyObject *args)
         return NULL;
     }
 
-    return PyInt_FromLong(buf.len);
+    return PyLong_FromLong(buf.len);
 }
 
 
@@ -1203,7 +1201,7 @@ ngx_python_socket_setblocking(ngx_python_socket_t *s, PyObject *arg)
     ngx_log_debug0(NGX_LOG_DEBUG_CORE, ngx_cycle->log, 0,
                    "python socket.setblocking()");
 
-    blocking = PyInt_AsLong(arg);
+    blocking = PyLong_AsLong(arg);
     if (blocking == -1 && PyErr_Occurred()) {
         return NULL;
     }
@@ -1304,7 +1302,7 @@ ngx_python_socket_shutdown(ngx_python_socket_t *s, PyObject *arg)
     ngx_log_debug0(NGX_LOG_DEBUG_CORE, ngx_cycle->log, 0,
                    "python socket.shutdown()");
 
-    how = PyInt_AsLong(arg);
+    how = PyLong_AsLong(arg);
     if (how == -1 && PyErr_Occurred()) {
         return NULL;
     }
@@ -1348,12 +1346,12 @@ ngx_python_socket_getaddr(ngx_python_socket_t *s, PyObject *args,
 
     case AF_UNIX:
 
-        if (!PyString_Check(args)) {
+        if (!PyBytes_Check(args)) {
             PyErr_Format(PyExc_TypeError, "UNIX address must be a string");
             return -1;
         }
 
-        if (PyString_AsStringAndSize(args, &host, &len) < 0) {
+        if (PyBytes_AsStringAndSize(args, &host, &len) < 0) {
             return -1;
         }
 
@@ -1492,7 +1490,7 @@ ngx_python_socket_repr(ngx_python_socket_t *s)
                  s->connection ? (int) s->connection->fd : -1,
                  s->family, s->type, s->proto);
 
-    return PyString_FromString(buffer);
+    return PyBytes_FromString(buffer);
 }
 
 
@@ -1690,12 +1688,12 @@ ngx_python_socket_file_get(ngx_python_socket_file_t *f, ngx_uint_t line,
 
     size = max <= 0 ? 128 : max;
 
-    ret = PyString_FromStringAndSize(NULL, size);
+    ret = PyBytes_FromStringAndSize(NULL, size);
     if (ret == NULL) {
         return NULL;
     }
 
-    dst = (u_char *) PyString_AS_STRING(ret);
+    dst = (u_char *) PyBytes_AS_STRING(ret);
 
     b = &f->buffer;
 
@@ -1734,14 +1732,14 @@ ngx_python_socket_file_get(ngx_python_socket_file_t *f, ngx_uint_t line,
                     break;
                 }
 
-                n = PyString_Size(ret);
+                n = PyBytes_Size(ret);
 
-                if (_PyString_Resize(&ret, n * 2) < 0) {
+                if (_PyBytes_Resize(&ret, n * 2) < 0) {
                     Py_DECREF(ret);
                     return NULL;
                 }
 
-                dst = (u_char *) PyString_AS_STRING(ret);
+                dst = (u_char *) PyBytes_AS_STRING(ret);
                 dst += n;
                 size = n;
             }
@@ -1766,7 +1764,7 @@ ngx_python_socket_file_get(ngx_python_socket_file_t *f, ngx_uint_t line,
     }
 
     if (size) {
-        if (_PyString_Resize(&ret, PyString_Size(ret) - size) < 0) {
+        if (_PyBytes_Resize(&ret, PyBytes_Size(ret) - size) < 0) {
             Py_DECREF(ret);
             return NULL;
         }

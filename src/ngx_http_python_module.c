@@ -174,7 +174,7 @@ ngx_http_python_access_handler(ngx_http_request_t *r)
             return NGX_ERROR;
         }
 
-        rc = PyInt_Check(ret) ? PyInt_AsLong(ret) : NGX_DECLINED;
+        rc = PyLong_Check(ret) ? PyLong_AsLong(ret) : NGX_DECLINED;
 
         Py_DECREF(ret);
 
@@ -266,7 +266,7 @@ ngx_http_python_content_event_handler(ngx_http_request_t *r)
         return;
     }
 
-    rc = PyInt_Check(ret) ? PyInt_AsLong(ret) : NGX_OK;
+    rc = PyLong_Check(ret) ? PyLong_AsLong(ret) : NGX_OK;
 
     Py_DECREF(ret);
 
@@ -300,7 +300,7 @@ ngx_http_python_variable(ngx_http_request_t *r, ngx_http_variable_value_t *v,
         return NGX_ERROR;
     }
 
-    if (PyString_AsStringAndSize(str, (char **) &p, &size) < 0) {
+    if (PyBytes_AsStringAndSize(str, (char **) &p, &size) < 0) {
         PyErr_Clear();
         Py_DECREF(str);
         return NGX_ERROR;

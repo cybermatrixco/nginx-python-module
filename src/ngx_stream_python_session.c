@@ -101,7 +101,6 @@ static PyGetSetDef ngx_stream_python_session_getset[] = {
 
 
 static PyTypeObject  ngx_stream_python_session_type = {
-    .ob_refcnt = 1,
     .tp_name = "ngx.StreamSession",
     .tp_basicsize = sizeof(ngx_stream_python_session_t),
     .tp_dealloc = (destructor) ngx_stream_python_session_dealloc,
@@ -121,7 +120,6 @@ static PyMappingMethods ngx_stream_python_session_var_mapping = {
 
 
 static PyTypeObject  ngx_stream_python_session_var_type = {
-    .ob_refcnt = 1,
     .tp_name = "ngx.StreamVariables",
     .tp_basicsize = sizeof(ngx_stream_python_session_var_t),
     .tp_dealloc = (destructor) ngx_stream_python_session_var_dealloc,
@@ -228,10 +226,10 @@ ngx_stream_python_session_get_buf(ngx_stream_python_session_t *self)
 
     b = s->connection->buffer;
     if (b == NULL) {
-        return PyString_FromStringAndSize(NULL, 0);
+        return PyBytes_FromStringAndSize(NULL, 0);
     }
 
-    return PyString_FromStringAndSize((char *) b->pos, b->last - b->pos);
+    return PyBytes_FromStringAndSize((char *) b->pos, b->last - b->pos);
 }
 
 
@@ -271,7 +269,7 @@ ngx_stream_python_session_dealloc(ngx_stream_python_session_t *self)
     Py_XDECREF(self->sock);
 #endif
 
-    self->ob_type->tp_free((PyObject*) self);
+    Py_TYPE(self)->tp_free(self);
 }
 
 
@@ -295,7 +293,7 @@ ngx_stream_python_session_var_subscript(ngx_stream_python_session_var_t *self,
     ngx_log_debug0(NGX_LOG_DEBUG_STREAM, s->connection->log, 0,
                    "stream python var subscript()");
 
-    if (PyString_AsStringAndSize(key, &data, &len) < 0 ) {
+    if (PyBytes_AsStringAndSize(key, &data, &len) < 0 ) {
         return NULL;
     }
 
@@ -311,10 +309,10 @@ ngx_stream_python_session_var_subscript(ngx_stream_python_session_var_t *self,
     }
 
     if (vv->not_found) {
-        return PyString_FromStringAndSize(NULL, 0);
+        return PyBytes_FromStringAndSize(NULL, 0);
     }
 
-    return PyString_FromStringAndSize((char *) vv->data, vv->len);
+    return PyBytes_FromStringAndSize((char *) vv->data, vv->len);
 }
 
 
@@ -323,7 +321,7 @@ ngx_stream_python_session_var_dealloc(ngx_stream_python_session_var_t *self)
 {
     Py_DECREF(self->ps);
 
-    self->ob_type->tp_free((PyObject*) self);
+    Py_TYPE(self)->tp_free(self);
 }
 
 

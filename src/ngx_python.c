@@ -308,15 +308,15 @@ ngx_python_eval(ngx_python_ctx_t *ctx, PyCodeObject *code, ngx_event_t *wake)
 
         recursion_depth = ps->recursion_depth;
         frame = ps->frame;
-        exc_type = ps->exc_type;
-        exc_value = ps->exc_value;
-        exc_traceback = ps->exc_traceback;
+        exc_type = ps->curexc_type;
+        exc_value = ps->curexc_value;
+        exc_traceback = ps->curexc_traceback;
 
         ps->recursion_depth = ctx->recursion_depth;
         ps->frame = ctx->frame;
-        ps->exc_type = ctx->exc_type;
-        ps->exc_value = ctx->exc_value;
-        ps->exc_traceback = ctx->exc_traceback;
+        ps->curexc_type = ctx->exc_type;
+        ps->curexc_value = ctx->exc_value;
+        ps->curexc_traceback = ctx->exc_traceback;
 
         if (swapcontext(&ctx->ruc, &ctx->uc) == -1) {
             ngx_log_error(NGX_LOG_ERR, ctx->log, ngx_errno,
@@ -325,15 +325,15 @@ ngx_python_eval(ngx_python_ctx_t *ctx, PyCodeObject *code, ngx_event_t *wake)
 
         ctx->recursion_depth = ps->recursion_depth;
         ctx->frame = ps->frame;
-        ctx->exc_type = ps->exc_type;
-        ctx->exc_value = ps->exc_value;
-        ctx->exc_traceback = ps->exc_traceback;
+        ctx->exc_type = ps->curexc_type;
+        ctx->exc_value = ps->curexc_value;
+        ctx->exc_traceback = ps->curexc_traceback;
 
         ps->recursion_depth = recursion_depth;
         ps->frame = frame;
-        ps->exc_type = exc_type;
-        ps->exc_value = exc_value;
-        ps->exc_traceback = exc_traceback;
+        ps->curexc_type = exc_type;
+        ps->curexc_value = exc_value;
+        ps->curexc_traceback = exc_traceback;
 
         (void) ngx_python_set_ctx(pctx);
 
@@ -351,7 +351,7 @@ ngx_python_eval(ngx_python_ctx_t *ctx, PyCodeObject *code, ngx_event_t *wake)
 
 #endif
 
-    result = PyEval_EvalCode(code, ctx->ns, ctx->ns);
+    result = PyEval_EvalCode((PyObject *) code, ctx->ns, ctx->ns);
     if (result == NULL) {
         ngx_log_error(NGX_LOG_ERR, ctx->log, 0, "python error: %s",
                       ngx_python_get_error(ctx->pool));
@@ -376,7 +376,7 @@ ngx_python_task_handler()
 
     ngx_log_debug0(NGX_LOG_DEBUG_CORE, ctx->log, 0, "python task handler");
 
-    ctx->result = PyEval_EvalCode(ctx->code, ctx->ns, ctx->ns);
+    ctx->result = PyEval_EvalCode((PyObject *) ctx->code, ctx->ns, ctx->ns);
     if (ctx->result == NULL) {
         ngx_log_error(NGX_LOG_ERR, ctx->log, 0, "python error: %s",
                       ngx_python_get_error(ctx->pool));
@@ -649,7 +649,7 @@ ngx_python_init_namespace(ngx_conf_t *cf)
 
         Py_Initialize();
 
-        m = Py_InitModule("ngx", NULL);
+        m = PyImport_ImportModule("ngx");
         if (m == NULL) {
             return NULL;
         }
@@ -781,8 +781,8 @@ ngx_python_get_error(ngx_pool_t *pool)
     }
 
     str = PyObject_Str(value);
-    if (str && PyString_Check(str)) {
-        text = PyString_AsString(str);
+    if (str && PyBytes_Check(str)) {
+        text = PyBytes_AsString(str);
     }
 
     module = PyImport_ImportModule("traceback");
@@ -811,13 +811,13 @@ ngx_python_get_error(ngx_pool_t *pool)
     }
 
     obj = PyTuple_GetItem(frame, 0);
-    if (obj &&  PyString_Check(obj)) {
-        file = PyString_AsString(obj);
+    if (obj &&  PyBytes_Check(obj)) {
+        file = PyBytes_AsString(obj);
     }
 
     obj = PyTuple_GetItem(frame, 1);
-    if (obj && PyInt_Check(obj)) {
-        line = PyInt_AsLong(obj);
+    if (obj && PyLong_Check(obj)) {
+        line = PyLong_AsLong(obj);
     }
 
 done:

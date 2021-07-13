@@ -273,7 +273,7 @@ ngx_python_resolve_getaddrinfo(PyObject *self, PyObject *args)
     if (port == -1) {
         PyErr_Clear();
 
-        srv = PyString_AsString(psrv);
+        srv = PyBytes_AsString(psrv);
         if (srv == NULL) {
             return NULL;
         }
@@ -464,7 +464,7 @@ ngx_python_resolve_gethostbyaddr_handler(ngx_resolver_ctx_t *ctx)
         goto failed;
     }
 
-    entry = PyString_FromStringAndSize((char *) rctx->addr.data,
+    entry = PyBytes_FromStringAndSize((char *) rctx->addr.data,
                                        rctx->addr.len);
     if (entry == NULL) {
         goto failed;
@@ -734,7 +734,7 @@ ngx_python_resolve_fmtaddr(struct sockaddr *sockaddr, ngx_uint_t addronly)
                              sizeof(buffer));
 
         if (addronly) {
-            return PyString_FromStringAndSize((char *) buffer, len);
+            return PyBytes_FromStringAndSize((char *) buffer, len);
         }
 
         return Py_BuildValue("(s#iii)", buffer, (int) len,
@@ -750,7 +750,7 @@ ngx_python_resolve_fmtaddr(struct sockaddr *sockaddr, ngx_uint_t addronly)
                             sizeof(buffer));
 
         if (addronly) {
-            return PyString_FromStringAndSize((char *) buffer, len);
+            return PyBytes_FromStringAndSize((char *) buffer, len);
         }
 
         return Py_BuildValue("(s#i)", buffer, (int) len,
